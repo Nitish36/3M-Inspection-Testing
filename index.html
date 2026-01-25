@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safety Inspection Portal</title>
+  <link rel="stylesheet" href="style/style.css">
+</head>
+<body>
+
+  <header>
+    <h1>3M Inspection & Testing</h1>
+    <nav>
+        <a href="#" onclick="showSection('dashboard')">Dashboard</a>
+        <a href="#" onclick="showSection('certificates')">Certificates</a>
+        <a href="#" onclick="showSection('renewals')">Renewals</a>
+        <a href="#" onclick="showSection('contact')">Contact</a>
+        <a href="#" onclick="showSection('about')">About</a>
+      </nav>
+  </header>
+
+  <div class="container">
+
+    <section id="login" class="card">
+      <h2>Secure Login</h2>
+      <input type="text" placeholder="User ID" />
+      <input type="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+    </section>
+
+    <section id="dashboard" class="card hidden">
+        <h2>Dashboard Overview</h2>
+
+        <p style="color: var(--text-light); margin-bottom: 20px;">
+            Quick snapshot of inspections, certificates, and renewal status.
+        </p>
+
+        <!-- STATS CARDS -->
+        <div class="grid">
+            <div class="card">
+            <h3>Total Assets</h3>
+            <p style="font-size: 28px; margin-top: 10px;">128</p>
+            <p style="color: var(--text-light); font-size: 13px;">Active inventory items</p>
+            </div>
+
+            <div class="card">
+            <h3>Valid Certificates</h3>
+            <p style="font-size: 28px; margin-top: 10px;">112</p>
+            <p style="color: var(--text-light); font-size: 13px;">Currently compliant</p>
+            </div>
+
+            <div class="card">
+            <h3>Expiring Soon</h3>
+            <p style="font-size: 28px; margin-top: 10px; color:#d97706;">9</p>
+            <p style="color: var(--text-light); font-size: 13px;">Within 7 days</p>
+            </div>
+
+            <div class="card">
+            <h3>Expired</h3>
+            <p style="font-size: 28px; margin-top: 10px; color:#dc2626;">3</p>
+            <p style="color: var(--text-light); font-size: 13px;">Immediate action required</p>
+            </div>
+        </div>
+
+        <br />
+    </section>
+
+
+    <section id="barcode" class="card hidden">
+      <h2>Barcode Scanner</h2>
+      <input type="text" placeholder="Enter Barcode ID" />
+      <button>Scan Barcode</button>
+    </section>
+
+    <section id="certificates" class="card hidden">
+        <h2>Certificates</h2>
+      
+        <p style="color: var(--text-light); margin-bottom: 20px;">
+          Access, verify, and manage safety certificates linked to inspected assets.
+        </p>
+      
+        <input type="text" placeholder="Search by Certificate No / Barcode / Asset ID" />
+      
+        <div class="grid">
+          <div class="card">
+            <h3>Form 11</h3>
+            <p>Inspection & safety compliance certificates.</p>
+            <button>View</button>
+          </div>
+      
+          <div class="card">
+            <h3>Form 13</h3>
+            <p>Load test & equipment certification.</p>
+            <button>View</button>
+          </div>
+      
+          <div class="card">
+            <h3>Other Certificates</h3>
+            <p>Additional compliance & safety documents.</p>
+            <button>View</button>
+          </div>
+        </div>
+      
+        <br />
+      
+        <p style="font-size: 14px; color: var(--text-light);">
+          All certificates are digitally stored and linked with corresponding inventory items
+          for quick access and verification.
+        </p>
+      </section>
+      
+
+      <section id="renewals" class="card hidden">
+        <h2>Renewals & Expiry Alerts</h2>
+      
+        <p style="color: var(--text-light); margin-bottom: 20px;">
+          Stay ahead of certificate expirations with automatic reminders and renewal tracking.
+        </p>
+      
+        <div class="grid">
+          <div class="card">
+            <h3>Expiring Soon</h3>
+            <p>Assets with certificates expiring within 7 days.</p>
+            <button onclick="showAlert()">View List</button>
+          </div>
+      
+          <div class="card">
+            <h3>Expired</h3>
+            <p>Certificates that require immediate renewal.</p>
+            <button onclick="showAlert()">View List</button>
+          </div>
+      
+          <div class="card">
+            <h3>Upcoming Renewals</h3>
+            <p>Planned renewals within the next 30 days.</p>
+            <button onclick="showAlert()">View List</button>
+          </div>
+        </div>
+      
+        <br />
+      
+        <p style="font-size: 14px; color: var(--text-light);">
+          The system triggers alerts one week and one day before certificate expiry
+          to ensure uninterrupted compliance.
+        </p>
+      </section>
+      
+
+    <section id="contact" class="card hidden">
+        <h2>Contact Us</h2>
+      
+        <p style="color: var(--text-light); margin-bottom: 20px;">
+          Have questions or need assistance with inspections, certificates, or renewals?
+          Our support team is here to help.
+        </p>
+      
+        <div class="grid">
+          <div class="card">
+            <h3>Email Support</h3>
+            <p>support@safetyportal.com</p>
+          </div>
+      
+          <div class="card">
+            <h3>Phone</h3>
+            <p>+91 XXXXX XXXXX</p>
+          </div>
+      
+          <div class="card">
+            <h3>Working Hours</h3>
+            <p>Mon – Sat, 9:00 AM – 6:00 PM</p>
+          </div>
+        </div>
+      
+        <br />
+      
+        <h3 style="color: var(--primary); margin-bottom: 10px;">Send Us a Message</h3>
+      
+        <input type="text" placeholder="Your Name" />
+        <input type="email" placeholder="Your Email" />
+        <input type="text" placeholder="Subject" />
+        <textarea placeholder="Your Message"
+          style="width:100%; padding:12px; border-radius:10px; border:1px solid #cbd5e1; min-height:100px;"></textarea>
+      
+        <br /><br />
+        <button onclick="submitContact()">Send Message</button>
+      </section>
+      
+
+    <section id="about" class="card hidden">
+        <h2>About the Platform</h2>
+      
+        <p style="margin-bottom: 15px; color: var(--text-light);">
+          Not just inspection, but surety of safety.  
+          Our Safety Inspection System is a centralized digital platform designed to simplify
+          safety audits, asset inspections, and certificate management for industries.
+        </p>
+      
+        <div class="grid">
+          <div class="card">
+            <h3>Digital Inspections</h3>
+            <p>Streamline safety inspections with digital records and easy tracking.</p>
+          </div>
+      
+          <div class="card">
+            <h3>Certificate Management</h3>
+            <p>Access, verify, and manage Form 11, Form 13, and other certificates securely.</p>
+          </div>
+      
+          <div class="card">
+            <h3>Inventory & Renewals</h3>
+            <p>Track assets, monitor expiry dates, and receive renewal alerts in advance.</p>
+          </div>
+        </div>
+      
+        <br />
+      
+        <h3 style="color: var(--primary); margin-bottom: 10px;">Industries We Serve</h3>
+        <p style="color: var(--text-light);">
+          Manufacturing · Construction · Warehousing · Industrial Plants · Corporate Facilities
+        </p>
+      
+        <br />
+      
+        <p style="font-size: 14px; color: var(--text-light);">
+          Built with compliance, reliability, and ease of use in mind, the platform supports
+          safety officers, inspectors, and organizations in maintaining a safer workplace.
+        </p>
+      </section>
+
+  </div>
+
+  <footer>
+    © 2026 Safety Inspection System
+  </footer>
+
+  <script src="script/script.js"></script>
+
+</body>
+</html>
