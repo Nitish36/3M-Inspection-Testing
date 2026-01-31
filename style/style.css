@@ -72,21 +72,62 @@ nav a:hover {
 
 /* Mobile Menu Toggle */
 .menu-toggle {
-  display: none;
+  display: none; /* Hidden on desktop */
+  cursor: pointer;
   flex-direction: column;
   gap: 5px;
-  background: none;
-  border: none;
-  cursor: pointer;
 }
 
-.menu-toggle span {
+.bar {
   width: 25px;
   height: 3px;
-  background: white;
+  background-color: white;
+  transition: all 0.3s ease;
   border-radius: 2px;
 }
 
+/* --- MOBILE NAVIGATION (Responsive) --- */
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: flex; /* Show hamburger on mobile */
+  }
+
+  nav {
+    display: none; /* Hide links by default */
+    flex-direction: column;
+    position: absolute;
+    top: 70px; /* Position below header */
+    left: 0;
+    width: 100%;
+    background-color: var(--primary);
+    padding: 20px 0;
+    text-align: center;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+  }
+
+  /* When menu is open */
+  nav.active {
+    display: flex;
+  }
+
+  nav a {
+    margin: 15px 0;
+    font-size: 18px;
+    display: block;
+  }
+
+  /* Animation: Turn hamburger into an 'X' when active */
+  .menu-toggle.active .bar:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+  }
+  .menu-toggle.active .bar:nth-child(2) {
+    opacity: 0;
+  }
+  .menu-toggle.active .bar:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+  }
+}
 /* Main Layout */
 .container {
   max-width: 1200px;
