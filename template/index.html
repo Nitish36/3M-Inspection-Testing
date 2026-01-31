@@ -49,10 +49,13 @@
 
     <!-- DASHBOARD SECTION -->
     <section id="dashboard" class="hidden">
-        <div class="section-header">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
             <h2>Dashboard Overview</h2>
-            <p>Quick snapshot of inspections and compliance status.</p>
+            <p>Quick snapshot of compliance status.</p>
         </div>
+        <button onclick="exportData()" class="btn-outline" style="width: auto;">Download Report (CSV)</button>
+    </div>
 
         <div class="grid">
             <div class="stat-card">
@@ -131,6 +134,29 @@
             <button id="stop-scan" class="hidden" onclick="stopScanner()" style="background: var(--danger);">Stop Camera</button>
             <button id="start-scan" onclick="startScanner()">Start Scanning</button>
         </div>
+        <div id="scanner-details" class="hidden" style="margin-top: 20px;">
+          <div class="card" style="border-top: 5px solid var(--secondary); text-align: left;">
+              <h3 id="res-type" style="margin-bottom: 5px;">---</h3>
+              <p style="font-size: 0.9rem; color: var(--text-light);">Asset ID: <span id="res-id" style="color: var(--text-dark); font-weight: 600;">---</span></p>
+              <hr style="margin: 15px 0; border: 0; border-top: 1px solid var(--border);">
+              
+              <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                  <div>
+                      <p style="font-size: 0.8rem; color: var(--text-light);">Status</p>
+                      <p id="res-status" style="font-weight: 700;">---</p>
+                  </div>
+                  <div>
+                      <p style="font-size: 0.8rem; color: var(--text-light);">Expiry Date</p>
+                      <p id="res-expiry" style="font-weight: 700;">---</p>
+                  </div>
+              </div>
+      
+              <div style="margin-top: 20px; display: flex; gap: 10px;">
+                  <button id="res-renew-btn" class="btn-block">Renew Now</button>
+                  <button onclick="document.getElementById('scanner-details').classList.add('hidden')" class="btn-outline">Close</button>
+              </div>
+          </div>
+      </div>
     </div>
 </section>
 

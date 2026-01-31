@@ -238,19 +238,34 @@ async function stopScanner() {
 
 // Logic to find the certificate after scanning
 async function searchByBarcode(id) {
-    const response = await fetch('/api/certificates');
-    const certs = await response.json();
-    
-    // Find the specific certificate matching the barcode
-    const found = certs.find(c => c.id === id);
+  const response = await fetch('/api/certificates');
+  const certs = await response.json();
+  const found = certs.find(c => c.id === id);
 
-    if (found) {
-        alert(`Found: ${found.type} (Status: ${found.status})`);
-        // You could also redirect them to the certificates tab to see it
-        showSection('certificates');
-    } else {
-        alert("Certificate ID not found in system.");
-    }
+  const detailsDiv = document.getElementById('scanner-details');
+
+  if (found) {
+      // Fill the card with data
+      document.getElementById('res-type').innerText = found.type;
+      document.getElementById('res-id').innerText = found.id;
+      document.getElementById('res-status').innerText = found.status;
+      document.getElementById('res-status').style.color = found.status === 'Valid' ? '#10b981' : '#ef4444';
+      document.getElementById('res-expiry').innerText = found.expiry_date || 'N/A';
+
+      // Set up the Renew button inside the result card
+      const renewBtn = document.getElementById('res-renew-btn');
+      renewBtn.onclick = () => renewCertificate(found.id);
+
+      detailsDiv.classList.remove('hidden'); // Show the card
+  } else {
+      alert("System Error: Asset ID not found.");
+      detailsDiv.classList.add('hidden');
+  }
+}
+
+function exportData() {
+  // This simply opens the Flask URL, which triggers a file download in the browser
+  window.location.href = '/api/export_csv';
 }
 
 // --- INITIALIZATION ---

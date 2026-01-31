@@ -1,7 +1,9 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, make_response
 import json
 import os
 from datetime import datetime, timedelta
+import csv
+import io
 
 app = Flask(__name__, template_folder='template')
 
@@ -169,6 +171,34 @@ def get_renewals():
             print(f"Error processing date for {c['id']}: {e}")
 
     return jsonify(upcoming_renewals)
+
+
+@app.route('/api/export_csv')
+def export_csv():
+    certs = load_data()
+
+    # Create an "in-memory" file
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # 1. Write the Header Row
+    writer.writerow(['Asset ID', 'Certificate Type', 'Status', 'Expiry Date'])
+
+    # 2. Write the Data Rows
+    for c in certs:
+        writer.writerow([
+            c.get('id', 'N/A'),
+            c.get('type', 'N/A'),
+            c.get('status', 'N/A'),
+            c.get('expiry_date', 'N/A')
+        ])
+
+    # 3. Create the response
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = "attachment; filename=safety_report.csv"
+    response.headers["Content-type"] = "text/csv"
+
+    return response
 
 
 if __name__ == '__main__':
