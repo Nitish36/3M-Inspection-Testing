@@ -145,3 +145,86 @@ function showSection(id) {
       loadCertificates();
   }
 }
+
+// Function to ask Flask to delete a certificate
+async function deleteCertificate(certId) {
+  if (!confirm(`Are you sure you want to delete ${certId}?`)) return;
+
+  const response = await fetch(`/api/delete_certificate/${certId}`, {
+      method: 'DELETE'
+  });
+
+  if (response.ok) {
+      loadCertificates(); // Refresh the list so the card disappears
+  } else {
+      alert("Failed to delete.");
+  }
+}
+
+// Updated Load function (Add the button here)
+async function loadCertificates() {
+  const response = await fetch('/api/certificates');
+  const certs = await response.json();
+  const displayGrid = document.getElementById('cert-display-grid');
+  
+  displayGrid.innerHTML = '';
+  certs.forEach(cert => {
+      displayGrid.innerHTML += `
+          <div class="card item-card">
+              <h3>${cert.type}</h3>
+              <p>ID: ${cert.id}</p>
+              <p>Status: <strong>${cert.status}</strong></p>
+              <!-- Pass the ID into the delete function -->
+              <button onclick="deleteCertificate('${cert.id}')" 
+                      style="background: #ef4444; margin-top: 10px;">
+                  Delete
+              </button>
+          </div>
+      `;
+  });
+}
+
+// Function to tell Flask to approve a certificate
+async function approveCertificate(certId) {
+  const response = await fetch(`/api/approve_certificate/${certId}`, {
+      method: 'PUT'
+  });
+
+  if (response.ok) {
+      loadCertificates(); // Refresh UI
+  } else {
+      alert("Approval failed.");
+  }
+}
+
+// Updated Load function (Add the Approve button logic)
+async function loadCertificates() {
+  const response = await fetch('/api/certificates');
+  const certs = await response.json();
+  const displayGrid = document.getElementById('cert-display-grid');
+  
+  displayGrid.innerHTML = '';
+  certs.forEach(cert => {
+      // Only show the Approve button if it's not already valid
+      const approveBtn = cert.status === "Pending Verification" 
+          ? `<button onclick="approveCertificate('${cert.id}')" style="background: #10b981; margin-top: 10px;">Approve</button>` 
+          : '';
+
+      displayGrid.innerHTML += `
+          <div class="card item-card">
+              <h3>${cert.type}</h3>
+              <p>ID: ${cert.id}</p>
+              <p>Status: <strong style="color: ${cert.status === 'Valid' ? '#10b981' : '#f59e0b'}">
+                  ${cert.status}
+              </strong></p>
+              
+              <div style="display: flex; gap: 10px;">
+                  ${approveBtn}
+                  <button onclick="deleteCertificate('${cert.id}')" style="background: #ef4444; margin-top: 10px;">
+                      Delete
+                  </button>
+              </div>
+          </div>
+      `;
+  });
+}

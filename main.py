@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, jsonify
+import json
+import os
 
 app = Flask(__name__, template_folder='template')
 
@@ -7,11 +9,30 @@ DATA = {
     "users": {"admin": "password123"}
 }
 
-# New: Our list of certificates (this stays in memory while the server runs)
-CERTIFICATES_LIST = [
-    {"id": "CERT-101", "type": "Form 11", "status": "Valid"},
-    {"id": "CERT-102", "type": "Form 13", "status": "Valid"}
-]
+# The name of our "database" file
+DATA_FILE = 'certificates.json'
+
+# --- HELPER FUNCTIONS (The "Logic" Layer) ---
+
+
+def load_data():
+    """Reads the JSON file and returns the list of certificates."""
+    # Check if the file exists first
+    if not os.path.exists(DATA_FILE):
+        return []  # Return an empty list if no file exists yet
+
+    with open(DATA_FILE, 'r') as file:
+        try:
+            return json.load(file)
+        except json.JSONDecodeError:
+            return []  # Return empty list if the file is corrupted/empty
+
+
+def save_data(certs):
+    """Writes the list of certificates into the JSON file."""
+    with open(DATA_FILE, 'w') as file:
+        # indent=4 makes the file easy for humans to read
+        json.dump(certs, file, indent=4)
 
 
 @app.route('/')
@@ -39,24 +60,64 @@ def get_stats():
 
 @app.route('/api/certificates', methods=['GET'])
 def get_certificates():
-    return jsonify(CERTIFICATES_LIST)
+    # Every time the user opens the tab, we read the LATEST data from the file
+    certs = load_data()
+    return jsonify(certs)
 
 
 @app.route('/api/add_certificate', methods=['POST'])
 def add_certificate():
-    new_cert = request.json # Get the data sent from JavaScript
+    new_cert = request.json
 
-    # Basic Validation
-    if not new_cert.get('id') or not new_cert.get('type'):
-        return jsonify({"status": "error", "message": "Missing fields"}), 400
+    # 1. Load existing data from the file
+    certs = load_data()
 
-    # Add a default status
+    # 2. Add the new entry to our list
     new_cert['status'] = "Pending Verification"
+    certs.append(new_cert)
 
-    # Add to our list
-    CERTIFICATES_LIST.append(new_cert)
+    # 3. Save the updated list back to the file permanently
+    save_data(certs)
+    return jsonify({"status": "success", "message": "Saved to disk!"}), 201
 
-    return jsonify({"status": "success", "message": "Certificate saved successfully!"}), 201
+
+@app.route('/api/delete_certificate/<cert_id>', methods=['DELETE'])
+def delete_certificate(cert_id):
+    # 1. Load the current data from the JSON file
+    certs = load_data()
+    # 2. Filtering Logic:
+    # We create a NEW list that contains everything EXCEPT the one we want to delete.
+    # This is the standard "Pythonic" way to delete an item from a list.
+    updated_certs = [c for c in certs if c['id'] != cert_id]
+    # Check if we actually removed something
+    if len(updated_certs) == len(certs):
+        return jsonify({"status": "error", "message": "Certificate not found"}), 404
+
+    # 3. Save the filtered list back to the JSON file
+    save_data(updated_certs)
+    return jsonify({"status": "success", "message": f"ID {cert_id} deleted successfully"})
+
+
+@app.route('/api/approve_certificate/<cert_id>', methods=['PUT'])
+def approve_certificate(cert_id):
+    # 1. Load the data
+    certs = load_data()
+    found = False
+
+    # 2. Update Logic:
+    # We loop through the list to find the one matching the ID
+    for c in certs:
+        if c['id'] == cert_id:
+            c['status'] = "Valid"  # Change the status
+            found = True
+            break # Stop looking once we find it
+
+    if not found:
+        return jsonify({"status": "error", "message": "Certificate not found"}), 404
+
+    # 3. Save the updated list back to the JSON file
+    save_data(certs)
+    return jsonify({"status": "success", "message": f"Certificate {cert_id} approved!"})
 
 
 if __name__ == '__main__':
