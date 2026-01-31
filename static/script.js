@@ -19,22 +19,29 @@ document.querySelectorAll('nav a').forEach(link => {
 
 // Consolidated showSection (Only one version needed!)
 function showSection(id) {
-    const sections = document.querySelectorAll('main > section');
-    sections.forEach(s => s.classList.add('hidden'));
-    
-    const target = document.getElementById(id);
-    if (target) {
-        target.classList.remove('hidden');
-    }
+  // 1. If the camera is running and we are leaving the scanner section, stop it
+  if (id !== 'barcode-scan' && html5QrCode && html5QrCode.isScanning) {
+      stopScanner();
+  }
 
-    // Trigger data loading based on section ID
-    if (id === 'dashboard') {
-        loadDashboard();
-    } else if (id === 'certificates') {
-        loadCertificates();
-    } else if (id === 'renewals') {
-        loadRenewals();
-    }
+  // 2. Hide all sections
+  const sections = document.querySelectorAll('main > section');
+  sections.forEach(s => s.classList.add('hidden'));
+  
+  // 3. Show the target section
+  const target = document.getElementById(id);
+  if (target) {
+      target.classList.remove('hidden');
+  }
+
+  // 4. Trigger data loading
+  if (id === 'dashboard') {
+      loadDashboard();
+  } else if (id === 'certificates') {
+      loadCertificates();
+  } else if (id === 'renewals') {
+      loadRenewals();
+  }
 }
 
 // --- 2. AUTHENTICATION ---
@@ -176,7 +183,78 @@ async function renewCertificate(certId) {
     }
 }
 
+let html5QrCode;
+
+async function startScanner() {
+    // Check if it's already running to prevent errors
+    if (html5QrCode && html5QrCode.isScanning) {
+        console.log("Scanner is already running.");
+        return;
+    }
+
+    document.getElementById('start-scan').classList.add('hidden');
+    document.getElementById('stop-scan').classList.remove('hidden');
+
+    // Create the instance
+    html5QrCode = new Html5Qrcode("reader");
+
+    const config = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 } 
+    };
+
+    try {
+        await html5QrCode.start(
+            { facingMode: "environment" }, 
+            config,
+            onScanSuccess
+        );
+    } catch (err) {
+        console.error("Camera access denied or error:", err);
+        alert("Could not start camera. Ensure you are using HTTPS or Localhost.");
+        stopScanner();
+    }
+}
+
+function onScanSuccess(decodedText, decodedResult) {
+    // When a code is found:
+    console.log(`Code scanned: ${decodedText}`);
+    document.getElementById('scanned-id').innerText = "Scanned ID: " + decodedText;
+    
+    // Stop the camera
+    stopScanner();
+
+    // Automatically search for this ID
+    searchByBarcode(decodedText);
+}
+
+async function stopScanner() {
+    if (html5QrCode) {
+        await html5QrCode.stop();
+        document.getElementById('start-scan').classList.remove('hidden');
+        document.getElementById('stop-scan').classList.add('hidden');
+    }
+}
+
+// Logic to find the certificate after scanning
+async function searchByBarcode(id) {
+    const response = await fetch('/api/certificates');
+    const certs = await response.json();
+    
+    // Find the specific certificate matching the barcode
+    const found = certs.find(c => c.id === id);
+
+    if (found) {
+        alert(`Found: ${found.type} (Status: ${found.status})`);
+        // You could also redirect them to the certificates tab to see it
+        showSection('certificates');
+    } else {
+        alert("Certificate ID not found in system.");
+    }
+}
+
 // --- INITIALIZATION ---
 window.onload = () => {
     showSection('login'); // Start at Login for better UX
 };
+

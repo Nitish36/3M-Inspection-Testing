@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <!-- Added Google Fonts for a more professional look -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- QR/Barcode Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="{{ url_for('static', filename='html5-qrcode.min.js') }}"></script>
 </head>
 <body>
 
@@ -23,6 +26,7 @@
   
       <nav id="nav-menu">
         <a href="#" onclick="showSection('dashboard')">Dashboard</a>
+        <a href="#" onclick="showSection('barcode-scan')">Scanner</a> <!-- New Link -->
         <a href="#" onclick="showSection('certificates')">Certificates</a>
         <a href="#" onclick="showSection('renewals')">Renewals</a>
         <a href="#" onclick="showSection('contact')">Contact</a>
@@ -111,6 +115,24 @@
           <!-- JavaScript will inject certificates here -->
       </div>
   </section>
+
+  <section id="barcode-scan" class="hidden">
+    <div class="section-header">
+        <h2>Barcode Scanner</h2>
+        <p>Point your camera at the asset's barcode to fetch details.</p>
+    </div>
+    
+    <div class="card">
+        <!-- This is where the camera video will appear -->
+        <div id="reader" style="width: 100%; max-width: 500px; margin: auto;"></div>
+        
+        <div id="scan-result" style="margin-top: 20px; text-align: center;">
+            <p id="scanned-id" style="font-weight: bold; color: var(--secondary);"></p>
+            <button id="stop-scan" class="hidden" onclick="stopScanner()" style="background: var(--danger);">Stop Camera</button>
+            <button id="start-scan" onclick="startScanner()">Start Scanning</button>
+        </div>
+    </div>
+</section>
 
     <!-- CONTACT SECTION -->
     <section id="contact" class="hidden">
