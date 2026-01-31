@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import json
 import os
+from datetime import datetime, timedelta
 
 app = Flask(__name__, template_folder='template')
 
@@ -53,9 +54,35 @@ def login():
 
 
 # API Route to get Dashboard Stats
-@app.route('/api/stats', methods=['GET'])
-def get_stats():
-    return jsonify(DATA['stats'])
+@app.route('/api/dashboard_stats', methods=['GET'])
+def get_dashboard_stats():
+    certs = load_data()
+    today = datetime.now()
+    
+    stats = {
+        "total": len(certs),
+        "valid": 0,
+        "expiring_soon": 0,
+        "expired": 0
+    }
+
+    for c in certs:
+        # If no date exists, treat it as valid for now
+        if 'expiry_date' not in c:
+            stats["valid"] += 1
+            continue
+            
+        expiry = datetime.strptime(c['expiry_date'], '%Y-%m-%d')
+        days_left = (expiry - today).days
+
+        if days_left < 0:
+            stats["expired"] += 1
+        elif 0 <= days_left <= 7: # Urgent: within 7 days
+            stats["expiring_soon"] += 1
+        else:
+            stats["valid"] += 1
+
+    return jsonify(stats)
 
 
 @app.route('/api/certificates', methods=['GET'])
@@ -68,15 +95,12 @@ def get_certificates():
 @app.route('/api/add_certificate', methods=['POST'])
 def add_certificate():
     new_cert = request.json
-
-    # 1. Load existing data from the file
+    # When adding a new cert, we set an expiry date (e.g., 1 year from today)
+    expiry_date = datetime.now() + timedelta(days=365)
+    new_cert['status'] = "Valid"
+    new_cert['expiry_date'] = expiry_date.strftime('%Y-%m-%d') # Save as YYYY-MM-DD string
     certs = load_data()
-
-    # 2. Add the new entry to our list
-    new_cert['status'] = "Pending Verification"
     certs.append(new_cert)
-
-    # 3. Save the updated list back to the file permanently
     save_data(certs)
     return jsonify({"status": "success", "message": "Saved to disk!"}), 201
 
@@ -118,6 +142,33 @@ def approve_certificate(cert_id):
     # 3. Save the updated list back to the JSON file
     save_data(certs)
     return jsonify({"status": "success", "message": f"Certificate {cert_id} approved!"})
+
+
+@app.route('/api/renewals', methods=['GET'])
+def get_renewals():
+    certs = load_data()
+    today = datetime.now()
+    upcoming_renewals = []
+
+    for c in certs:
+        # 1. Check if expiry_date exists (for old data)
+        if 'expiry_date' not in c:
+            # If missing, let's pretend it expires tomorrow for testing
+            c['expiry_date'] = (today + timedelta(days=1)).strftime('%Y-%m-%d')
+        
+        try:
+            expiry = datetime.strptime(c['expiry_date'], '%Y-%m-%d')
+            days_left = (expiry - today).days
+            
+            # 2. TEST LOGIC: Show everything expiring in the next 400 days 
+            # (This ensures your new 365-day certs show up)
+            if days_left <= 400: 
+                c['days_left'] = days_left
+                upcoming_renewals.append(c)
+        except Exception as e:
+            print(f"Error processing date for {c['id']}: {e}")
+
+    return jsonify(upcoming_renewals)
 
 
 if __name__ == '__main__':

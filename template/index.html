@@ -74,40 +74,16 @@
         </div>
     </section>
     <!--Renewal SEction-->
-    <section id="renewals" class="card hidden">
-      <h2>Renewals & Expiry Alerts</h2>
-    
-      <p style="color: var(--text-light); margin-bottom: 20px;">
-        Stay ahead of certificate expirations with automatic reminders and renewal tracking.
-      </p>
-    
-      <div class="grid">
-        <div class="card">
-          <h3>Expiring Soon</h3>
-          <p>Assets with certificates expiring within 7 days.</p>
-          <button onclick="showAlert()">View List</button>
-        </div>
-    
-        <div class="card">
-          <h3>Expired</h3>
-          <p>Certificates that require immediate renewal.</p>
-          <button onclick="showAlert()">View List</button>
-        </div>
-    
-        <div class="card">
-          <h3>Upcoming Renewals</h3>
-          <p>Planned renewals within the next 30 days.</p>
-          <button onclick="showAlert()">View List</button>
-        </div>
+    <section id="renewals" class="hidden">
+      <div class="section-header">
+          <h2>Renewals & Expiry Alerts</h2>
+          <p>Items listed here expire within 30 days or are already overdue.</p>
       </div>
-    
-      <br />
-    
-      <p style="font-size: 14px; color: var(--text-light);">
-        The system triggers alerts one week and one day before certificate expiry
-        to ensure uninterrupted compliance.
-      </p>
-    </section>
+  
+      <div class="grid">
+          <!-- Renewals will be loaded here -->
+      </div>
+  </section>
 
     <!-- CERTIFICATES SECTION -->
     <section id="certificates" class="hidden">
