@@ -1,60 +1,67 @@
-// Toggle Mobile Menu
-const mobileMenu  = document.getElementById('mobile-menu');
+// --- 1. UI & NAVIGATION LOGIC ---
+
+const mobileMenu = document.getElementById('mobile-menu');
 const navMenu = document.getElementById('nav-menu');
 
+// Fix: Use mobileMenu (the variable you actually defined)
 mobileMenu.addEventListener('click', () => {
-  // Toggle the 'active' class on both the icon and the menu
-  mobileMenu.classList.toggle('active');
-  navMenu.classList.toggle('active');
-});
-
-menuToggle.addEventListener('click', () => {
+    mobileMenu.classList.toggle('active');
     navMenu.classList.toggle('active');
 });
 
-// Close menu when a link is clicked (for mobile)
+// Close menu when a link is clicked
 document.querySelectorAll('nav a').forEach(link => {
-  link.addEventListener('click', () => {
-      mobileMenu.classList.remove('active');
-      navMenu.classList.remove('active');
-  });
+    link.addEventListener('click', () => {
+        mobileMenu.classList.remove('active');
+        navMenu.classList.remove('active');
+    });
 });
 
-// Existing function logic (simplified for example)
+// Consolidated showSection (Only one version needed!)
 function showSection(id) {
     const sections = document.querySelectorAll('main > section');
     sections.forEach(s => s.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
+    
+    const target = document.getElementById(id);
+    if (target) {
+        target.classList.remove('hidden');
+    }
+
+    // Trigger data loading based on section ID
+    if (id === 'dashboard') {
+        loadDashboard();
+    } else if (id === 'certificates') {
+        loadCertificates();
+    } else if (id === 'renewals') {
+        loadRenewals();
+    }
 }
 
-function login() {
-    alert("Login successful!");
-    showSection('dashboard');
-}
+// --- 2. AUTHENTICATION ---
 
 async function login() {
-  const userID = document.querySelector('input[placeholder="User ID"]').value;
-  const password = document.querySelector('input[placeholder="Password"]').value;
+    const userIDInput = document.querySelector('input[placeholder="User ID"]');
+    const passwordInput = document.querySelector('input[placeholder="Password"]');
 
-  const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: userID, password: password })
-  });
+    const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: userIDInput.value, password: passwordInput.value })
+    });
 
-  const result = await response.json();
+    const result = await response.json();
 
-  if (response.ok) {
-      alert(result.message);
-      showSection('dashboard');
-      loadDashboardStats(); // Fetch data after login
-  } else {
-      alert(result.message);
-  }
+    if (response.ok) {
+        alert(result.message);
+        showSection('dashboard'); // This will automatically call loadDashboard()
+    } else {
+        alert(result.message);
+    }
 }
 
-// Function to fetch stats from Flask
-async function loadDashboard() {  // <--- Make sure this name is correct
+// --- 3. DASHBOARD LOGIC ---
+
+async function loadDashboard() {
     const response = await fetch('/api/dashboard_stats');
     const stats = await response.json();
     
@@ -67,206 +74,109 @@ async function loadDashboard() {  // <--- Make sure this name is correct
     }
 }
 
-// Update showSection to include the dashboard trigger
-
+// --- 4. CERTIFICATE CRUD ---
 
 async function saveCertificate() {
-  const idInput = document.getElementById('new-cert-id');
-  const typeInput = document.getElementById('new-cert-type');
+    const idInput = document.getElementById('new-cert-id');
+    const typeInput = document.getElementById('new-cert-type');
 
-  const certData = {
-      id: idInput.value,
-      type: typeInput.value
-  };
+    if (!idInput.value) {
+        alert("Please enter a Certificate ID");
+        return;
+    }
 
-  if (!certData.id) {
-      alert("Please enter a Certificate ID");
-      return;
-  }
+    const response = await fetch('/api/add_certificate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: idInput.value, type: typeInput.value })
+    });
 
-  try {
-      const response = await fetch('/api/add_certificate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(certData)
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-          alert(result.message);
-          idInput.value = ''; // Clear input
-          loadCertificates(); // Refresh the list automatically
-      } else {
-          alert("Error: " + result.message);
-      }
-  } catch (error) {
-      console.error("Error saving certificate:", error);
-  }
+    if (response.ok) {
+        idInput.value = ''; 
+        loadCertificates(); 
+    }
 }
 
-// 2. Function to LOAD certificates from the Flask Backend
 async function loadCertificates() {
-  const displayGrid = document.getElementById('cert-display-grid');
-  
-  try {
-      const response = await fetch('/api/certificates');
-      const certificates = await response.json();
+    const response = await fetch('/api/certificates');
+    const certs = await response.json();
+    const displayGrid = document.getElementById('cert-display-grid');
+    
+    displayGrid.innerHTML = '';
+    certs.forEach(cert => {
+        const approveBtn = cert.status === "Pending Verification" 
+            ? `<button onclick="approveCertificate('${cert.id}')" style="background: #10b981; margin-top: 10px;">Approve</button>` 
+            : '';
 
-      // Clear the grid first
-      displayGrid.innerHTML = '';
-
-      // Loop through the data and create cards
-      certificates.forEach(cert => {
-          const card = document.createElement('div');
-          card.className = 'card item-card';
-          card.innerHTML = `
-              <span style="font-size: 12px; color: var(--text-light);">ID: ${cert.id}</span>
-              <h3 style="margin: 5px 0;">${cert.type}</h3>
-              <p style="color: var(--success); font-weight: 600; font-size: 14px;">● ${cert.status}</p>
-              <button class="btn-outline" style="margin-top:10px; padding: 5px 10px; font-size: 12px;">Download PDF</button>
-          `;
-          displayGrid.appendChild(card);
-      });
-  } catch (error) {
-      console.error("Error loading certificates:", error);
-  }
+        displayGrid.innerHTML += `
+            <div class="card item-card">
+                <span style="font-size: 11px; color: var(--text-light);">ID: ${cert.id}</span>
+                <h3>${cert.type}</h3>
+                <p>Status: <strong style="color: ${cert.status === 'Valid' ? '#10b981' : '#f59e0b'}">
+                    ${cert.status}
+                </strong></p>
+                
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    ${approveBtn}
+                    <button onclick="deleteCertificate('${cert.id}')" style="background: #ef4444; margin-top: 10px;">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        `;
+    });
 }
 
-// 3. Modify your existing showSection function to load data when needed
-function showSection(id) {
-  const sections = document.querySelectorAll('main > section');
-  sections.forEach(s => s.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-
-  if (id === 'dashboard') {
-      loadDashboard();
-  } else if (id === 'certificates') {
-      loadCertificates();
-  } else if (id === 'renewals') {
-      loadRenewals();
-  }
-}
-// Function to ask Flask to delete a certificate
 async function deleteCertificate(certId) {
-  if (!confirm(`Are you sure you want to delete ${certId}?`)) return;
-
-  const response = await fetch(`/api/delete_certificate/${certId}`, {
-      method: 'DELETE'
-  });
-
-  if (response.ok) {
-      loadCertificates(); // Refresh the list so the card disappears
-  } else {
-      alert("Failed to delete.");
-  }
+    if (!confirm(`Delete ${certId}?`)) return;
+    const response = await fetch(`/api/delete_certificate/${certId}`, { method: 'DELETE' });
+    if (response.ok) loadCertificates();
 }
 
-// Updated Load function (Add the button here)
-async function loadCertificates() {
-  const response = await fetch('/api/certificates');
-  const certs = await response.json();
-  const displayGrid = document.getElementById('cert-display-grid');
-  
-  displayGrid.innerHTML = '';
-  certs.forEach(cert => {
-      // Only show the Approve button if it's not already valid
-      const approveBtn = cert.status === "Pending Verification" 
-          ? `<button onclick="approveCertificate('${cert.id}')" style="background: #10b981; margin-top: 10px;">Approve</button>` 
-          : '';
-
-      displayGrid.innerHTML += `
-          <div class="card item-card">
-              <h3>${cert.type}</h3>
-              <p>ID: ${cert.id}</p>
-              <p>Status: <strong style="color: ${cert.status === 'Valid' ? '#10b981' : '#f59e0b'}">
-                  ${cert.status}
-              </strong></p>
-              
-              <div style="display: flex; gap: 10px;">
-                  ${approveBtn}
-                  <button onclick="deleteCertificate('${cert.id}')" style="background: #ef4444; margin-top: 10px;">
-                      Delete
-                  </button>
-              </div>
-          </div>
-      `;
-  });
-}
-
-// Function to tell Flask to approve a certificate
 async function approveCertificate(certId) {
-  const response = await fetch(`/api/approve_certificate/${certId}`, {
-      method: 'PUT'
-  });
-
-  if (response.ok) {
-      loadCertificates(); // Refresh UI
-  } else {
-      alert("Approval failed.");
-  }
+    const response = await fetch(`/api/approve_certificate/${certId}`, { method: 'PUT' });
+    if (response.ok) loadCertificates();
 }
 
+// --- 5. RENEWALS ---
 
 async function loadRenewals() {
-  const response = await fetch('/api/renewals');
-  const renewals = await response.json();
-  const displayGrid = document.querySelector('#renewals .grid');
-  
-  displayGrid.innerHTML = '';
+    const response = await fetch('/api/renewals');
+    const renewals = await response.json();
+    const displayGrid = document.querySelector('#renewals .grid');
+    
+    displayGrid.innerHTML = '';
+    if (renewals.length === 0) {
+        displayGrid.innerHTML = '<p>No upcoming renewals.</p>';
+        return;
+    }
 
-  if (renewals.length === 0) {
-      displayGrid.innerHTML = '<p>All assets are compliant. No upcoming renewals.</p>';
-      return;
-  }
-
-  renewals.forEach(cert => {
-      // Color coding based on urgency
-      const color = cert.days_left < 0 ? '#ef4444' : '#f59e0b';
-      const statusText = cert.days_left < 0 ? 'EXPIRED' : `Expires in ${cert.days_left} days`;
-
-      displayGrid.innerHTML += `
-          <div class="card" style="border-left: 5px solid ${color}">
-              <h3>${cert.type}</h3>
-              <p>ID: ${cert.id}</p>
-              <p style="color: ${color}; font-weight: bold;">${statusText}</p>
-              <button onclick="renewCertificate('${cert.id}')" style="margin-top:10px;">
-                  Renew (Extend 1 Year)
-              </button>
-          </div>
-      `;
-  });
+    renewals.forEach(cert => {
+        const color = cert.days_left < 0 ? '#ef4444' : '#f59e0b';
+        displayGrid.innerHTML += `
+            <div class="card" style="border-left: 5px solid ${color}">
+                <h3>${cert.type}</h3>
+                <p>ID: ${cert.id}</p>
+                <p style="color: ${color}; font-weight: bold;">
+                    ${cert.days_left < 0 ? 'EXPIRED' : `Expires in ${cert.days_left} days`}
+                </p>
+                <button onclick="renewCertificate('${cert.id}')" style="margin-top:10px;">
+                    Renew
+                </button>
+            </div>
+        `;
+    });
 }
 
-// Function to handle the Renewal click
 async function renewCertificate(certId) {
-  // We can reuse our Update logic here! 
-  // We will tell the backend to reset the expiry date.
-  const response = await fetch(`/api/approve_certificate/${certId}`, {
-      method: 'PUT'
-  });
-
-  if (response.ok) {
-      alert("Certificate Renewed!");
-      loadRenewals();
-  }
+    const response = await fetch(`/api/approve_certificate/${certId}`, { method: 'PUT' });
+    if (response.ok) {
+        alert("Renewed!");
+        loadRenewals();
+    }
 }
 
-function showSection(id) {
-  const sections = document.querySelectorAll('main > section');
-  sections.forEach(s => s.classList.add('hidden'));
-  
-  document.getElementById(id).classList.remove('hidden');
-
-  // Add these triggers
-  if (id === 'certificates') {
-      loadCertificates();
-  } else if (id === 'renewals') {
-      loadRenewals(); // <--- Make sure this is here!
-  }
-}
-
-// This runs as soon as the page loads
+// --- INITIALIZATION ---
 window.onload = () => {
-  showSection('dashboard'); // Start on dashboard
+    showSection('login'); // Start at Login for better UX
 };
