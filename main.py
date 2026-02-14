@@ -230,10 +230,13 @@ def export_csv():
     # 2. Write the Data Rows
     for c in certs:
         writer.writerow([
-            c.get('id', 'N/A'),
-            c.get('type', 'N/A'),
-            c.get('status', 'N/A'),
-            c.get('expiry_date', 'N/A')
+            c.get('id'),
+            c.get('form_type'),
+            c.get('type'),
+            c.get('site'),
+            c.get('date'),
+            c.get('expiry_date'),
+            c.get('status')
         ])
 
     # 3. Create the response

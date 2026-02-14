@@ -58,6 +58,7 @@
       <a onclick="showSection('certificates')">Certificates</a>
       <a onclick="showSection('renewals')">Renewals</a>
       <a onclick="showSection('contact')">Contact</a>
+      <a onclick="showSection('downloads')">Downloads</a>
       <a onclick="logout()" class="logout">Logout</a>
     </nav>
   </div>
@@ -256,6 +257,50 @@
     <div style="margin-top: 40px; padding: 15px; background: #fffde7; border-left: 5px solid #ffd600;">
         <strong>Engineer's Note:</strong> All equipment marked as 'Expired' must be removed from service immediately until re-testing is performed.
     </div>
+  </div>
+</section>
+
+<!-- DOWNLOADS SECTION -->
+<section id="downloads" class="hidden">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2>Report Center</h2>
+      <a href="/api/export_csv" class="btn-small" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          📥 Download Master Excel (CSV)
+      </a>
+  </div>
+
+  <!-- Search Bar (Like Page 14 of PDF) -->
+  <div class="card" style="padding: 15px; margin-bottom: 20px; background: #f8f9fa; border: 1px solid #ddd;">
+      <input type="text" id="download-search" onkeyup="searchDownloads()" placeholder="Search by Certificate No or Site..." style="width: 100%; padding: 12px; border-radius: 5px; border: 1px solid #ccc;">
+  </div>
+
+  <div class="card" style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse;" id="download-table">
+          <thead>
+              <tr style="background: #333; color: white; text-align: left;">
+                  <th style="padding: 12px;">Cert No</th>
+                  <th style="padding: 12px;">Site</th>
+                  <th style="padding: 12px;">Type</th>
+                  <th style="padding: 12px;">Action</th>
+              </tr>
+          </thead>
+          <tbody>
+              {% for cert in certificates %}
+              <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 12px;">{{ cert.id }}</td>
+                  <td style="padding: 12px;">{{ cert.site }}</td>
+                  <td style="padding: 12px;">{{ cert.type }}</td>
+                  <td style="padding: 12px;">
+                      <!-- Individual actions -->
+                      <a href="{{ url_for('generate_qr', cert_id=cert.id) }}" download="QR_{{ cert.id }}.png" title="Download QR">
+                          <button style="background:none; border:none; cursor:pointer; font-size: 1.2rem;">🖼️</button>
+                      </a>
+                      <button onclick="window.print()" title="Print Certificate" style="background:none; border:none; cursor:pointer; font-size: 1.2rem; margin-left: 10px;">📄</button>
+                  </td>
+              </tr>
+              {% endfor %}
+          </tbody>
+      </table>
   </div>
 </section>
 
