@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, jsonify, make_response
+from flask import Flask, render_template, request, jsonify, make_response, send_file
 import json
 import os
 from datetime import datetime, timedelta
 import csv
 import io
+import qrcode
 
 app = Flask(__name__, template_folder='template')
 
@@ -19,16 +20,13 @@ DATA_FILE = 'certificates.json'
 
 
 def load_data():
-    """Reads the JSON file and returns the list of certificates."""
-    # Check if the file exists first
     if not os.path.exists(DATA_FILE):
-        return []  # Return an empty list if no file exists yet
-
+        return []
     with open(DATA_FILE, 'r') as file:
         try:
             return json.load(file)
         except json.JSONDecodeError:
-            return []  # Return empty list if the file is corrupted/empty
+            return []
 
 
 def save_data(certs):
@@ -39,8 +37,10 @@ def save_data(certs):
 
 
 @app.route('/')
-def home():
-    return render_template('index.html')
+def index():
+    # We load the certificates to pass them to the template
+    certificates = load_data()
+    return render_template('index.html', certificates=certificates)
 
 
 @app.route('/api/login', methods=['POST'])
@@ -60,7 +60,7 @@ def login():
 def get_dashboard_stats():
     certs = load_data()
     today = datetime.now()
-    
+
     stats = {
         "total": len(certs),
         "valid": 0,
@@ -73,7 +73,7 @@ def get_dashboard_stats():
         if 'expiry_date' not in c:
             stats["valid"] += 1
             continue
-            
+
         expiry = datetime.strptime(c['expiry_date'], '%Y-%m-%d')
         days_left = (expiry - today).days
 
@@ -112,7 +112,8 @@ def delete_certificate(cert_id):
     # 1. Load the current data from the JSON file
     certs = load_data()
     # 2. Filtering Logic:
-    # We create a NEW list that contains everything EXCEPT the one we want to delete.
+    # We create a NEW list that contains everything EXCEPT the one we want to
+    # delete.
     # This is the standard "Pythonic" way to delete an item from a list.
     updated_certs = [c for c in certs if c['id'] != cert_id]
     # Check if we actually removed something
@@ -122,6 +123,18 @@ def delete_certificate(cert_id):
     # 3. Save the filtered list back to the JSON file
     save_data(updated_certs)
     return jsonify({"status": "success", "message": f"ID {cert_id} deleted successfully"})
+
+
+@app.route('/verify/<cert_id>')
+def verify_certificate(cert_id):
+    certs = load_data()
+    # Find the certificate where the 'id' matches
+    cert_data = next((item for item in certs if str(item.get("id")) == str(cert_id)), None)
+
+    if cert_data:
+        return render_template('verify_status.html', data=cert_data)
+    else:
+        return "<h1>Certificate Not Found</h1>", 404
 
 
 @app.route('/api/approve_certificate/<cert_id>', methods=['PUT'])
@@ -157,11 +170,11 @@ def get_renewals():
         if 'expiry_date' not in c:
             # If missing, let's pretend it expires tomorrow for testing
             c['expiry_date'] = (today + timedelta(days=1)).strftime('%Y-%m-%d')
-        
+
         try:
             expiry = datetime.strptime(c['expiry_date'], '%Y-%m-%d')
             days_left = (expiry - today).days
-            
+
             # 2. TEST LOGIC: Show everything expiring in the next 400 days 
             # (This ensures your new 365-day certs show up)
             if days_left <= 400: 
@@ -171,6 +184,22 @@ def get_renewals():
             print(f"Error processing date for {c['id']}: {e}")
 
     return jsonify(upcoming_renewals)
+
+
+@app.route('/api/expiring_list')
+def expiring_list():
+    certs = load_data()
+    today = datetime.now()
+    # Find anything expiring in the next 30 days
+    warning_list = []
+    for c in certs:
+        expiry = datetime.strptime(c['expiry_date'], '%Y-%m-%d')
+        days_left = (expiry - today).days
+        if 0 <= days_left <= 30:
+            c['days_left'] = days_left
+            warning_list.append(c)
+
+    return jsonify(warning_list)
 
 
 @app.route('/api/export_csv')
@@ -199,6 +228,78 @@ def export_csv():
     response.headers["Content-type"] = "text/csv"
 
     return response
+
+
+@app.route('/generate_qr/<cert_id>')
+def generate_qr(cert_id):
+    if not cert_id or cert_id == "None":
+        return "ID is missing", 400
+
+    # The URL that the phone will open when scanned
+    verify_url = f"{request.host_url}verify/{cert_id}"
+
+    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr.add_data(verify_url)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+
+    return send_file(buf, mimetype='image/png')
+
+
+@app.route('/api/profile_summary')
+def profile_summary():
+    certs = load_data()
+    if not certs:
+        return jsonify({"message": "No data"}), 404
+
+    # Calculations for the "One Page Profile"
+    total = len(certs)
+    valid = len([c for c in certs if c.get('status') == 'Valid'])
+    expired = total - valid
+    compliance_rate = round((valid / total) * 100) if total > 0 else 0
+
+    # Group by Equipment Type (e.g., how many Slings vs. Shackles)
+    types = {}
+    for c in certs:
+        t = c.get('type', 'Other')
+        types[t] = types.get(t, 0) + 1
+
+    return jsonify({
+        "customer_name": "RR Solutions Client",
+        "site_location": "Main Project Site",
+        "compliance_rate": compliance_rate,
+        "total_assets": total,
+        "valid": valid,
+        "expired": expired,
+        "equipment_breakdown": types
+    })
+
+
+@app.route('/api/chart_data')
+def chart_data():
+    certs = load_data()
+
+    # 1. Status Breakdown (for Pie Chart)
+    valid_count = len([c for c in certs if c.get('status') == 'Valid'])
+    expired_count = len(certs) - valid_count
+
+    # 2. Equipment Type Breakdown (for Bar Chart)
+    type_counts = {}
+    for c in certs:
+        t = c.get('type', 'Other')
+        type_counts[t] = type_counts.get(t, 0) + 1
+
+    return jsonify({
+        "status_labels": ["Valid / Safe", "Expired / Urgent"],
+        "status_values": [valid_count, expired_count],
+        "type_labels": list(type_counts.keys()),
+        "type_values": list(type_counts.values())
+    })
 
 
 if __name__ == '__main__':

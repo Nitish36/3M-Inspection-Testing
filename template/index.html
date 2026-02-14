@@ -10,6 +10,7 @@
 
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="{{ url_for('static', filename='html5-qrcode.min.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -51,6 +52,7 @@
 
     <nav id="nav-menu">
       <a onclick="showSection('dashboard')">Dashboard</a>
+      <a onclick="showOnePageProfile()">One page profile</a> 
       <a onclick="showSection('barcode-scan')">Scanner</a>
       <a onclick="showSection('certificates')">Certificates</a>
       <a onclick="showSection('renewals')">Renewals</a>
@@ -69,19 +71,19 @@
   <div class="grid">
     <div class="stat-card">
       <span>Total Assets</span>
-      <p class="value">128</p>
+      <p class="value" id="stat-total">0</p> <!-- Added id -->
     </div>
     <div class="stat-card">
       <span>Valid Certificates</span>
-      <p class="value">112</p>
+      <p class="value" id="stat-valid">0</p> <!-- Added id -->
     </div>
     <div class="stat-card warning">
       <span>Expiring Soon</span>
-      <p class="value">9</p>
+      <p class="value" id="stat-soon">0</p> <!-- Added id -->
     </div>
     <div class="stat-card danger">
       <span>Expired</span>
-      <p class="value">3</p>
+      <p class="value" id="stat-expired">0</p> <!-- Added id -->
     </div>
   </div>
 </section>
@@ -99,13 +101,92 @@
 <!-- CERTIFICATES -->
 <section id="certificates" class="hidden">
   <h2>Certificate Management</h2>
+  
+  <!-- This is your existing grid for JS -->
   <div id="cert-display-grid" class="grid"></div>
+
+  <!-- FIXED SECTION: Table for displaying QR Codes -->
+  <div class="card" style="margin-top: 20px; overflow-x: auto;">
+    <table style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: #f4f4f4; text-align: left;">
+          <th style="padding: 10px;">Asset ID</th>
+          <th style="padding: 10px;">Equipment</th>
+          <th style="padding: 10px;">QR Code</th>
+          <th style="padding: 10px;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cert in certificates %} 
+        <tr style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 10px;">{{ cert.id }}</td>
+            <td style="padding: 10px;">{{ cert.type or cert.equipment }}</td>
+            <td style="padding: 10px;">
+                <!-- Call the QR route using the cert.id from THIS loop -->
+                <img src="{{ url_for('generate_qr', cert_id=cert.id) }}" width="60" style="border: 1px solid #eee;">
+            </td>
+            <td style="padding: 10px;">
+                <a href="{{ url_for('generate_qr', cert_id=cert.id) }}" download="QR_{{ cert.id }}.png">
+                    <button class="btn-small" style="background: #ffcc00; border:none; padding: 5px 10px; cursor:pointer; border-radius:4px;">Download QR</button>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </section>
 
 <!-- RENEWALS -->
 <section id="renewals" class="hidden">
   <h2>Renewals & Alerts</h2>
   <div class="grid"></div>
+</section>
+
+<section id="profile" class="hidden">
+  <div class="card profile-container" style="background: white; padding: 30px; border-radius: 12px; border-top: 5px solid #ffcc00;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f4f4f4; padding-bottom: 15px;">
+        <div>
+            <h2 id="profile-customer" style="margin:0;">Loading...</h2>
+            <p id="profile-site" class="text-muted" style="margin:0;"></p>
+        </div>
+        <button onclick="window.print()" class="btn-small">Print Report</button>
+    </div>
+
+    <div class="grid" style="margin-top: 20px;">
+        <!-- Compliance Circular Gauge (Simulated with CSS) -->
+        <div class="stat-card" style="text-align: center;">
+            <h1 style="font-size: 3rem; color: #28a745;" id="profile-rate">0%</h1>
+            <p>Overall Compliance</p>
+        </div>
+        
+        <div class="stat-card">
+            <p><strong>Total Inventory:</strong> <span id="profile-total">0</span></p>
+            <p><strong>Fit for Use:</strong> <span id="profile-valid" style="color: green;">0</span></p>
+            <p><strong>Quarantined/Expired:</strong> <span id="profile-expired" style="color: red;">0</span></p>
+        </div>
+    </div>
+
+    <h3 style="margin-top: 30px;">Asset Distribution</h3>
+    <div id="type-breakdown" style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <!-- JS will inject badges here -->
+    </div>
+    <div class="grid" style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div class="card" style="padding: 15px; background: #fff;">
+          <h4 style="text-align: center;">Safety Compliance Status</h4>
+          <canvas id="statusChart"></canvas>
+      </div>
+      <div class="card" style="padding: 15px; background: #fff;">
+          <h4 style="text-align: center;">Equipment Inventory</h4>
+          <canvas id="typeChart"></canvas>
+      </div>
+  </div>
+
+    <div style="margin-top: 40px; padding: 15px; background: #fffde7; border-left: 5px solid #ffd600;">
+        <strong>Engineer's Note:</strong> All equipment marked as 'Expired' must be removed from service immediately until re-testing is performed.
+    </div>
+  </div>
 </section>
 
 <!-- CONTACT -->
@@ -115,6 +196,32 @@
     <p>Email: support@rrsolutions.com</p>
   </div>
 </section>
+
+<div class="certificate-container">
+  <h3>Inspection Certificate: {{ cert_id }}</h3>
+  
+  <!-- This dynamically loads the QR code for this specific ID -->
+  <!-- Inside your table or list -->
+  <table class="table">
+    {% for cert in certificates %} 
+    <tr>
+        <td><strong>Asset ID:</strong> {{ cert.id }}</td>
+        <td>
+            <!-- This works because it is INSIDE the for loop -->
+            <img src="{{ url_for('generate_qr', cert_id=cert.id) }}" width="80">
+        </td>
+        <td>
+            <!-- This is your download button - ALSO INSIDE THE LOOP -->
+            <a href="{{ url_for('generate_qr', cert_id=cert.id) }}" download="QR_{{ cert.id }}.png">
+                <button class="btn btn-warning">Download QR Code</button>
+            </a>
+        </td>
+    </tr>
+    {% endfor %} 
+  </table>
+  
+  <p class="text-muted">Scan these codes to verify equipment authenticity in the field.</p>
+</div>
 
 </main>
 

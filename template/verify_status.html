@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3M Inspection Verification</title>
+    <!-- Bootstrap for quick styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f4f4; }
+        .cert-card { max-width: 500px; margin: 50px auto; border-radius: 15px; overflow: hidden; }
+        .status-banner { padding: 20px; text-align: center; font-weight: bold; font-size: 1.5rem; }
+        .pass { background-color: #d4edda; color: #155724; }
+        .fail { background-color: #f8d7da; color: #721c24; }
+        .3m-logo { font-weight: 900; color: #ff0000; font-size: 2rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card cert-card shadow">
+        <div class="card-header bg-white text-center py-3">
+            <span class="3m-logo">3M</span> 
+            <div class="text-muted small">Inspection & Testing Services</div>
+        </div>
+
+        <!-- Banner changes color based on status -->
+        <div class="status-banner {% if data.status == 'Pass' %}pass{% else %}fail{% endif %}">
+            {% if data.status == 'Pass' %}
+                ✅ VERIFIED: VALID
+            {% else %}
+                ❌ ALERT: EXPIRED / FAILED
+            {% endif %}
+        </div>
+
+        <div class="card-body">
+            <table class="table table-borderless">
+                <tr>
+                    <th class="text-muted">Certificate No:</th>
+                    <td><strong>{{ data.cert_id }}</strong></td>
+                </tr>
+                <tr>
+                    <th class="text-muted">Equipment:</th>
+                    <td>{{ data.equipment_name }}</td>
+                </tr>
+                <tr>
+                    <th class="text-muted">Inspection Date:</th>
+                    <td>{{ data.inspection_date }}</td>
+                </tr>
+                <tr>
+                    <th class="text-muted">Valid Until:</th>
+                    <td>{{ data.expiry_date }}</td>
+                </tr>
+                <tr>
+                    <th class="text-muted">Inspector:</th>
+                    <td>{{ data.inspector_name }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="card-footer text-center py-3 bg-white">
+            <small class="text-muted">This is an automated verification record. <br> Digital ID: {{ data.cert_id }}</small>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

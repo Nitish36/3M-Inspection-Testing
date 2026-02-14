@@ -233,6 +233,91 @@ async function searchByBarcode(id) {
   details.classList.remove("hidden");
 }
 
+// Profile Summary
+
+async function showOnePageProfile() {
+  showSection('profile'); // Your existing function to switch tabs
+  
+  try {
+      const response = await fetch('/api/profile_summary');
+      const data = await response.json();
+
+      // Update Text
+      document.getElementById('profile-customer').innerText = data.customer_name;
+      document.getElementById('profile-site').innerText = "Location: " + data.site_location;
+      document.getElementById('profile-rate').innerText = data.compliance_rate + "%";
+      document.getElementById('profile-total').innerText = data.total_assets;
+      document.getElementById('profile-valid').innerText = data.valid;
+      document.getElementById('profile-expired').innerText = data.expired;
+
+      // Create badges for equipment types
+      const container = document.getElementById('type-breakdown');
+      container.innerHTML = ''; // clear old ones
+      for (const [type, count] of Object.entries(data.equipment_breakdown)) {
+          container.innerHTML += `<span class="badge" style="background:#eee; padding:10px; border-radius:20px;">${type}: ${count}</span>`;
+      }
+  } catch (error) {
+      console.error("Error loading profile:", error);
+  }
+}
+
+// Charts
+
+let myStatusChart = null;
+let myTypeChart = null;
+
+async function renderCharts() {
+    const response = await fetch('/api/chart_data');
+    const data = await response.json();
+
+    // 1. Safety Status Pie Chart
+    const ctxStatus = document.getElementById('statusChart').getContext('2d');
+    if (myStatusChart) myStatusChart.destroy(); // Clean up old chart
+    myStatusChart = new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: data.status_labels,
+            datasets: [{
+                data: data.status_values,
+                backgroundColor: ['#28a745', '#dc3545'],
+                borderWidth: 1
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // 2. Equipment Type Bar Chart
+    const ctxType = document.getElementById('typeChart').getContext('2d');
+    if (myTypeChart) myTypeChart.destroy(); // Clean up old chart
+    myTypeChart = new Chart(ctxType, {
+        type: 'bar',
+        data: {
+            labels: data.type_labels,
+            datasets: [{
+                label: 'Quantity',
+                data: data.type_values,
+                backgroundColor: '#ffcc00',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+// Update your existing showOnePageProfile function to call renderCharts()
+async function showOnePageProfile() {
+    showSection('profile');
+    
+    // ... your existing code to update text (Total, Valid, etc.) ...
+
+    // ADD THIS LINE AT THE END
+    renderCharts();
+}
+
 /* =====================================================
    EXPORT
 ===================================================== */
