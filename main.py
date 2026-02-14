@@ -302,5 +302,27 @@ def chart_data():
     })
 
 
+@app.route('/api/notifications')
+def get_notifications():
+    certs = load_data()
+    today = datetime.now()
+    alerts = []
+
+    for c in certs:
+        if 'expiry_date' not in c: continue
+
+        expiry = datetime.strptime(c['expiry_date'], '%Y-%m-%d')
+        days_left = (expiry - today).days
+
+        if days_left == 1:
+            alerts.append({"id": c['id'], "msg": "Expires TOMORROW!", "type": "urgent"})
+        elif 1 < days_left <= 7:
+            alerts.append({"id": c['id'], "msg": f"Expires in {days_left} days", "type": "warning"})
+        elif days_left == 0:
+            alerts.append({"id": c['id'], "msg": "Expires TODAY!", "type": "urgent"})
+
+    return jsonify(alerts)
+
+
 if __name__ == '__main__':
     app.run(debug=True)

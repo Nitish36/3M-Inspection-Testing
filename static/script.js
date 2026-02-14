@@ -308,6 +308,56 @@ async function renderCharts() {
     });
 }
 
+// Notifications
+let alertsShown = false;
+
+async function checkNotifications() {
+    // Only show if not already shown in this session
+    if (alertsShown) return;
+
+    try {
+        const response = await fetch('/api/notifications');
+        const alerts = await response.json();
+
+        if (alerts.length > 0) {
+            const modal = document.getElementById('notification-modal');
+            const body = document.getElementById('modal-body');
+            const header = document.getElementById('modal-header');
+
+            // Set header color based on most urgent alert
+            const hasUrgent = alerts.some(a => a.type === 'urgent');
+            header.style.backgroundColor = hasUrgent ? '#dc3545' : '#ffc107';
+
+            // Build alert list
+            body.innerHTML = alerts.map(a => `
+                <div style="border-left: 5px solid ${a.type === 'urgent' ? '#dc3545' : '#ffc107'}; padding: 10px; margin-bottom: 10px; background: #fff5f5;">
+                    <strong>Asset #${a.id}:</strong> ${a.msg}
+                </div>
+            `).join('');
+
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex'; // Ensure it's visible
+            alertsShown = true;
+        }
+    } catch (error) {
+        console.error("Notification Error:", error);
+    }
+}
+
+function closeModal() {
+    document.getElementById('notification-modal').style.display = 'none';
+}
+
+// Call this inside your login function after success!
+// Example:
+function login() {
+    // ... your login logic ...
+    // if success:
+    document.getElementById('login-page').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    checkNotifications(); // <--- TRIGGER ALERTS HERE
+}
+
 // Update your existing showOnePageProfile function to call renderCharts()
 async function showOnePageProfile() {
     showSection('profile');
