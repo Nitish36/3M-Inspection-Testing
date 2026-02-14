@@ -368,6 +368,55 @@ async function requestRetest(certId) {
   }
 }
 
+async function submitNewCertificate(event) {
+  event.preventDefault(); // Prevent page reload
+
+  const payload = {
+      id: document.getElementById('new-id').value,
+      form_type: document.getElementById('new-form-type').value,
+      type: document.getElementById('new-equipment').value,
+      site: document.getElementById('new-site').value,
+      date: document.getElementById('new-date').value,
+      expiry_date: document.getElementById('new-expiry').value
+  };
+
+  try {
+      const response = await fetch('/api/add_certificate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (result.status === 'success') {
+          alert("Record added successfully!");
+          document.getElementById('add-cert-form').reset();
+          
+          // Refresh the dashboard and list
+          loadDashboardStats();
+          showSection('certificates'); 
+      } else {
+          alert("Error: " + result.message);
+      }
+  } catch (error) {
+      console.error("Add Error:", error);
+      alert("Server connection failed.");
+  }
+}
+
+function filterByForm(type) {
+  const rows = document.querySelectorAll('tbody tr');
+  rows.forEach(row => {
+      const rowForm = row.getAttribute('data-form'); // We need to add this attribute to the row
+      if (type === 'ALL' || rowForm === type) {
+          row.style.display = '';
+      } else {
+          row.style.display = 'none';
+      }
+  });
+}
+
 function closeModal() {
     document.getElementById('notification-modal').style.display = 'none';
 }

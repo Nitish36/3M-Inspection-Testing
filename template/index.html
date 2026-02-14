@@ -52,6 +52,7 @@
 
     <nav id="nav-menu">
       <a onclick="showSection('dashboard')">Dashboard</a>
+      <a onclick="showSection('add-certificate')" style="color: #28a745; font-weight: bold;">+ Add Inspection</a>
       <a onclick="showOnePageProfile()">One page profile</a> 
       <a onclick="showSection('barcode-scan')">Scanner</a>
       <a onclick="showSection('certificates')">Certificates</a>
@@ -86,6 +87,23 @@
       <p class="value" id="stat-expired">0</p> <!-- Added id -->
     </div>
   </div>
+
+  <h2 style="margin-top:30px;">Quick Actions</h2>
+  <div class="grid">
+    <!-- NEW ACTION CARD -->
+    <div class="stat-card" onclick="showSection('add-certificate')" style="cursor:pointer; border: 2px dashed #28a745;">
+      <h1 style="color: #28a745;">➕</h1>
+      <p><strong>New Inspection</strong></p>
+      <span>Log Form 11, 13 or others</span>
+    </div>
+
+    <!-- Scanner Action -->
+    <div class="stat-card" onclick="showSection('barcode-scan')" style="cursor:pointer;">
+      <h1>📷</h1>
+      <p><strong>Open Scanner</strong></p>
+      <span>Scan Barcode/QR</span>
+    </div>
+  </div>
 </section>
 
 <!-- SCANNER -->
@@ -107,6 +125,12 @@
 
   <!-- FIXED SECTION: Table for displaying QR Codes -->
   <div class="card" style="margin-top: 20px; overflow-x: auto;">
+    <div style="margin-bottom: 20px; text-align: center;">
+      <button onclick="filterByForm('ALL')" class="btn-filter">ALL</button>
+      <button onclick="filterByForm('Form 11')" class="btn-filter">FORM 11</button>
+      <button onclick="filterByForm('Form 13')" class="btn-filter">FORM 13</button>
+      <button onclick="filterByForm('Others')" class="btn-filter">OTHERS</button>
+  </div>
     <table style="width:100%; border-collapse: collapse;">
       <thead>
         <tr style="background: #f4f4f4; text-align: left;">
@@ -134,6 +158,52 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
+</section>
+
+<section id="add-certificate" class="hidden">
+  <div class="card" style="max-width: 600px; margin: auto;">
+      <h2>Log New Inspection</h2>
+      <form id="add-cert-form" onsubmit="submitNewCertificate(event)">
+          <div style="margin-bottom: 15px;">
+              <label>Asset / Certificate ID:</label>
+              <input type="text" id="new-id" placeholder="e.g. 22M0001" required style="width:100%; padding:8px;">
+          </div>
+
+          <div style="margin-bottom: 15px;">
+              <label>Form Type (Category):</label>
+              <select id="new-form-type" style="width:100%; padding:8px;" required>
+                  <option value="Form 11">Form 11 (Lifting Tools)</option>
+                  <option value="Form 13">Form 13 (Pressure Vessels)</option>
+                  <option value="Others">Others / PPE</option>
+              </select>
+          </div>
+
+          <div style="margin-bottom: 15px;">
+              <label>Equipment Description:</label>
+              <input type="text" id="new-equipment" placeholder="e.g. Wire Rope Sling" required style="width:100%; padding:8px;">
+          </div>
+
+          <div style="margin-bottom: 15px;">
+              <label>Project Site Name:</label>
+              <input type="text" id="new-site" placeholder="e.g. Thane Creek Bridge" required style="width:100%; padding:8px;">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+              <div>
+                  <label>Inspection Date:</label>
+                  <input type="date" id="new-date" required style="width:100%; padding:8px;">
+              </div>
+              <div>
+                  <label>Expiry Date:</label>
+                  <input type="date" id="new-expiry" required style="width:100%; padding:8px;">
+              </div>
+          </div>
+
+          <button type="submit" style="background: #28a745; color: white; width: 100%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+              Save to Inventory
+          </button>
+      </form>
   </div>
 </section>
 

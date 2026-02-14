@@ -96,15 +96,29 @@ def get_certificates():
 
 @app.route('/api/add_certificate', methods=['POST'])
 def add_certificate():
-    new_cert = request.json
-    # When adding a new cert, we set an expiry date (e.g., 1 year from today)
-    expiry_date = datetime.now() + timedelta(days=365)
-    new_cert['status'] = "Valid"
-    new_cert['expiry_date'] = expiry_date.strftime('%Y-%m-%d') # Save as YYYY-MM-DD string
+    data = request.json
+
+    # Structure the data according to the 3M requirements
+    new_cert = {
+        "id": data.get('id'),
+        "form_type": data.get('form_type'), # Form 11, 13, etc.
+        "type": data.get('type'),           # Equipment name
+        "site": data.get('site'),           # Project Site
+        "date": data.get('date'),           # Inspection date
+        "expiry_date": data.get('expiry_date'),
+        "status": "Valid",                  # Default status
+        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+
     certs = load_data()
+
+    # Check if ID already exists to prevent duplicates
+    if any(c['id'] == new_cert['id'] for c in certs):
+        return jsonify({"status": "error", "message": "ID already exists"}), 400
+
     certs.append(new_cert)
     save_data(certs)
-    return jsonify({"status": "success", "message": "Saved to disk!"}), 201
+    return jsonify({"status": "success", "message": "Record added to database!"}), 201
 
 
 @app.route('/api/delete_certificate/<cert_id>', methods=['DELETE'])
