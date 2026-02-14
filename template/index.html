@@ -3,231 +3,128 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Safety Inspection Portal</title>
+  <title>RR Solutions | Safety Inspection Portal</title>
+
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <!-- Added Google Fonts for a more professional look -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- QR/Barcode Scanner Library -->
+
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="{{ url_for('static', filename='html5-qrcode.min.js') }}"></script>
 </head>
+
 <body>
 
-  <header>
-    <div class="header-container">
-      <h1>3M <span>Inspection</span></h1>
-      
-      <!-- The Hamburger Icon -->
-      <div class="menu-toggle" id="mobile-menu">
-        <span class="bar"></span>
-        <span class="bar"></span>
-        <span class="bar"></span>
-      </div>
-  
-      <nav id="nav-menu">
-        <a href="#" onclick="showSection('dashboard')">Dashboard</a>
-        <a href="#" onclick="showSection('barcode-scan')">Scanner</a> <!-- New Link -->
-        <a href="#" onclick="showSection('certificates')">Certificates</a>
-        <a href="#" onclick="showSection('renewals')">Renewals</a>
-        <a href="#" onclick="showSection('contact')">Contact</a>
-        <a href="#" onclick="showSection('about')">About</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="container">
-    <!-- LOGIN SECTION -->
-    <section id="login" class="card main-card">
-      <h2>Secure Login</h2>
-      <p class="subtitle">Enter your credentials to access the portal</p>
-      <div class="form-group">
-        <input type="text" placeholder="User ID" />
-        <input type="password" placeholder="Password" />
-        <button class="btn-block" onclick="login()">Login to Portal</button>
-      </div>
-    </section>
-
-    <!-- DASHBOARD SECTION -->
-    <section id="dashboard" class="hidden">
-      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <h2>Dashboard Overview</h2>
-            <p>Quick snapshot of compliance status.</p>
-        </div>
-        <button onclick="exportData()" class="btn-outline" style="width: auto;">Download Report (CSV)</button>
-    </div>
-
-        <div class="grid">
-            <div class="stat-card">
-                <span class="label">Total Assets</span>
-                <p class="value">128</p>
-                <p class="trend">Active inventory</p>
-            </div>
-            <div class="stat-card">
-                <span class="label">Valid Certificates</span>
-                <p class="value">112</p>
-                <p class="trend">Compliant</p>
-            </div>
-            <div class="stat-card warning">
-                <span class="label">Expiring Soon</span>
-                <p class="value">9</p>
-                <p class="trend">Next 7 days</p>
-            </div>
-            <div class="stat-card danger">
-                <span class="label">Expired</span>
-                <p class="value">3</p>
-                <p class="trend">Action required</p>
-            </div>
-        </div>
-    </section>
-    <!--Renewal SEction-->
-    <section id="renewals" class="hidden">
-      <div class="section-header">
-          <h2>Renewals & Expiry Alerts</h2>
-          <p>Items listed here expire within 30 days or are already overdue.</p>
-      </div>
-  
-      <div class="grid">
-          <!-- Renewals will be loaded here -->
-      </div>
-  </section>
-
-    <!-- CERTIFICATES SECTION -->
-    <section id="certificates" class="hidden">
-      <div class="section-header">
-          <h2>Certificate Management</h2>
-          <p>View existing records or add a new safety inspection certificate.</p>
-      </div>
-  
-      <!-- SAVE FORM -->
-      <div class="card" style="margin-bottom: 30px; border-top: 4px solid var(--secondary);">
-          <h3>Add New Record</h3>
-          <div class="grid" style="margin-top: 15px;">
-              <input type="text" id="new-cert-id" placeholder="Asset ID / Certificate No." />
-              <select id="new-cert-type" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border);">
-                  <option value="Form 11">Form 11 (General Inspection)</option>
-                  <option value="Form 13">Form 13 (Load Test)</option>
-                  <option value="Safety Audit">Safety Audit</option>
-              </select>
-          </div>
-          <button onclick="saveCertificate()" style="margin-top: 15px;">Save to Database</button>
-      </div>
-  
-      <!-- LIST DISPLAY -->
-      <div id="cert-display-grid" class="grid">
-          <!-- JavaScript will inject certificates here -->
-      </div>
-  </section>
-
-  <section id="barcode-scan" class="hidden">
-    <div class="section-header">
-        <h2>Barcode Scanner</h2>
-        <p>Point your camera at the asset's barcode to fetch details.</p>
-    </div>
+<!-- ================= LOGIN PAGE ================= -->
+<section id="login-page" class="login-wrapper">
+  <div class="login-card">
     
-    <div class="card">
-        <!-- This is where the camera video will appear -->
-        <div id="reader" style="width: 100%; max-width: 500px; margin: auto;"></div>
-        
-        <div id="scan-result" style="margin-top: 20px; text-align: center;">
-            <p id="scanned-id" style="font-weight: bold; color: var(--secondary);"></p>
-            <button id="stop-scan" class="hidden" onclick="stopScanner()" style="background: var(--danger);">Stop Camera</button>
-            <button id="start-scan" onclick="startScanner()">Start Scanning</button>
-        </div>
-        <div id="scanner-details" class="hidden" style="margin-top: 20px;">
-          <div class="card" style="border-top: 5px solid var(--secondary); text-align: left;">
-              <h3 id="res-type" style="margin-bottom: 5px;">---</h3>
-              <p style="font-size: 0.9rem; color: var(--text-light);">Asset ID: <span id="res-id" style="color: var(--text-dark); font-weight: 600;">---</span></p>
-              <hr style="margin: 15px 0; border: 0; border-top: 1px solid var(--border);">
-              
-              <div class="grid" style="grid-template-columns: 1fr 1fr;">
-                  <div>
-                      <p style="font-size: 0.8rem; color: var(--text-light);">Status</p>
-                      <p id="res-status" style="font-weight: 700;">---</p>
-                  </div>
-                  <div>
-                      <p style="font-size: 0.8rem; color: var(--text-light);">Expiry Date</p>
-                      <p id="res-expiry" style="font-weight: 700;">---</p>
-                  </div>
-              </div>
-      
-              <div style="margin-top: 20px; display: flex; gap: 10px;">
-                  <button id="res-renew-btn" class="btn-block">Renew Now</button>
-                  <button onclick="document.getElementById('scanner-details').classList.add('hidden')" class="btn-outline">Close</button>
-              </div>
-          </div>
-      </div>
-    </div>
+    <!-- LOGO -->
+    <img src="{{ url_for('static', filename='images/rr_logo.jpeg') }}" class="login-logo" alt="RR Solutions">
+
+    <h2>Industrial Inspection & Safety Experts</h2>
+    <!-- <p class="subtitle">Ensuring safety, reliability, and legal compliance for your machinery and lifting equipment</p> -->
+
+    <input type="text" id="username" placeholder="User ID">
+    <input type="password" id="password" placeholder="Password">
+
+    <button onclick="login()">Login</button>
+
+    <p class="login-footer">© 2026 RR Solutions</p>
+  </div>
 </section>
 
-    <!-- CONTACT SECTION -->
-    <section id="contact" class="hidden">
-        <div class="card">
-            <h2>Contact Support</h2>
-            <div class="contact-grid">
-                <div class="contact-info">
-                    <p><strong>Email:</strong> support@safetyportal.com</p>
-                    <p><strong>Phone:</strong> +91 XXXXX XXXXX</p>
-                    <p><strong>Hours:</strong> Mon – Sat, 9AM – 6PM</p>
-                </div>
-                <div class="contact-form">
-                    <input type="text" placeholder="Your Name" />
-                    <input type="email" placeholder="Your Email" />
-                    <textarea placeholder="How can we help?"></textarea>
-                    <button onclick="submitContact()">Send Message</button>
-                </div>
-            </div>
-        </div>
-    </section>
+<!-- ================= MAIN APP ================= -->
+<div id="app" class="hidden">
 
-    <!-- ABOUT SECTION -->
+<header>
+  <div class="header-container">
+    <div class="brand">
+      <img src="{{ url_for('static', filename='images/rr_logo.jpeg') }}" alt="RR Solutions">
+      <h1>RR <span>Solutions</span></h1>
+    </div>
 
-    <section id="about" class="card hidden">
-      <h2>About the Platform</h2>
-    
-      <p style="margin-bottom: 15px; color: var(--text-light);">
-        Not just inspection, but surety of safety.  
-        Our Safety Inspection System is a centralized digital platform designed to simplify
-        safety audits, asset inspections, and certificate management for industries.
-      </p>
-    
-      <div class="grid">
-        <div class="card">
-          <h3>Digital Inspections</h3>
-          <p>Streamline safety inspections with digital records and easy tracking.</p>
-        </div>
-    
-        <div class="card">
-          <h3>Certificate Management</h3>
-          <p>Access, verify, and manage Form 11, Form 13, and other certificates securely.</p>
-        </div>
-    
-        <div class="card">
-          <h3>Inventory & Renewals</h3>
-          <p>Track assets, monitor expiry dates, and receive renewal alerts in advance.</p>
-        </div>
-      </div>
-    
-      <br />
-    
-      <h3 style="color: var(--primary); margin-bottom: 10px;">Industries We Serve</h3>
-      <p style="color: var(--text-light);">
-        Manufacturing · Construction · Warehousing · Industrial Plants · Corporate Facilities
-      </p>
-    
-      <br />
-    
-      <p style="font-size: 14px; color: var(--text-light);">
-        Built with compliance, reliability, and ease of use in mind, the platform supports
-        safety officers, inspectors, and organizations in maintaining a safer workplace.
-      </p>
-    </section>
-  </main>
+    <div class="menu-toggle" id="mobile-menu">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </div>
 
-  <footer>
-    <p>© 2026 Safety Inspection System | Designed for Excellence</p>
-  </footer>
+    <nav id="nav-menu">
+      <a onclick="showSection('dashboard')">Dashboard</a>
+      <a onclick="showSection('barcode-scan')">Scanner</a>
+      <a onclick="showSection('certificates')">Certificates</a>
+      <a onclick="showSection('renewals')">Renewals</a>
+      <a onclick="showSection('contact')">Contact</a>
+      <a onclick="logout()" class="logout">Logout</a>
+    </nav>
+  </div>
+</header>
 
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+<main class="container">
+
+<!-- DASHBOARD -->
+<section id="dashboard">
+  <h2>Dashboard Overview</h2>
+
+  <div class="grid">
+    <div class="stat-card">
+      <span>Total Assets</span>
+      <p class="value">128</p>
+    </div>
+    <div class="stat-card">
+      <span>Valid Certificates</span>
+      <p class="value">112</p>
+    </div>
+    <div class="stat-card warning">
+      <span>Expiring Soon</span>
+      <p class="value">9</p>
+    </div>
+    <div class="stat-card danger">
+      <span>Expired</span>
+      <p class="value">3</p>
+    </div>
+  </div>
+</section>
+
+<!-- SCANNER -->
+<section id="barcode-scan" class="hidden">
+  <h2>Barcode Scanner</h2>
+  <div class="card">
+    <div id="reader" style="max-width:500px;margin:auto;"></div>
+    <button onclick="startScanner()">Start Scanner</button>
+    <button onclick="stopScanner()" class="btn-outline">Stop</button>
+  </div>
+</section>
+
+<!-- CERTIFICATES -->
+<section id="certificates" class="hidden">
+  <h2>Certificate Management</h2>
+  <div id="cert-display-grid" class="grid"></div>
+</section>
+
+<!-- RENEWALS -->
+<section id="renewals" class="hidden">
+  <h2>Renewals & Alerts</h2>
+  <div class="grid"></div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="hidden">
+  <div class="card">
+    <h2>Contact Support</h2>
+    <p>Email: support@rrsolutions.com</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>© 2026 RR Solutions. All Rights Reserved.</p>
+</footer>
+
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
 </body>
 </html>
