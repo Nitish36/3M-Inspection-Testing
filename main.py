@@ -324,5 +324,20 @@ def get_notifications():
     return jsonify(alerts)
 
 
+@app.route('/api/request_retest/<cert_id>', methods=['POST'])
+def request_retest(cert_id):
+    # In a real app, you would send an email here using Flask-Mail
+    # For now, we will simulate the process
+    certs = load_data()
+    cert = next((c for c in certs if str(c.get('id')) == str(cert_id)), None)
+
+    if cert:
+        print(f"NOTIFICATION: Renewal requested for Asset {cert_id} ({cert.get('type')})")
+        # You could also update the status to 'Renewal Requested' in the JSON
+        return jsonify({"status": "success", "message": f"Retest request sent for {cert_id}!"})
+
+    return jsonify({"status": "error", "message": "Asset not found"}), 404
+
+
 if __name__ == '__main__':
     app.run(debug=True)

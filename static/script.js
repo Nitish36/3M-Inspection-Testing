@@ -330,10 +330,16 @@ async function checkNotifications() {
 
             // Build alert list
             body.innerHTML = alerts.map(a => `
-                <div style="border-left: 5px solid ${a.type === 'urgent' ? '#dc3545' : '#ffc107'}; padding: 10px; margin-bottom: 10px; background: #fff5f5;">
-                    <strong>Asset #${a.id}:</strong> ${a.msg}
-                </div>
-            `).join('');
+              <div style="border-left: 5px solid ${a.type === 'urgent' ? '#dc3545' : '#ffc107'}; padding: 15px; margin-bottom: 15px; background: #fff5f5; display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                      <strong>Asset #${a.id}:</strong><br>
+                      <span style="font-size: 0.9rem;">${a.msg}</span>
+                  </div>
+                  <button onclick="requestRetest('${a.id}')" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+                      Request Re-test
+                  </button>
+              </div>
+          `).join('');
 
             modal.classList.remove('hidden');
             modal.style.display = 'flex'; // Ensure it's visible
@@ -342,6 +348,24 @@ async function checkNotifications() {
     } catch (error) {
         console.error("Notification Error:", error);
     }
+}
+
+async function requestRetest(certId) {
+  if (!confirm(`Send re-test request for Asset #${certId} to RR Solutions?`)) return;
+
+  try {
+      const response = await fetch(`/api/request_retest/${certId}`, { method: 'POST' });
+      const result = await response.json();
+
+      if (result.status === 'success') {
+          alert("Success: RR Solutions has been notified. We will contact you shortly.");
+      } else {
+          alert("Error: " + result.message);
+      }
+  } catch (error) {
+      console.error("Retest Request Error:", error);
+      alert("Failed to send request. Please check your connection.");
+  }
 }
 
 function closeModal() {
